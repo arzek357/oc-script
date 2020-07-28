@@ -1,0 +1,36 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testdeployment
+spec:
+  replicas: 1
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - java
+  template:
+    metadata:
+      labels:
+        app: java
+    spec:
+      containers:
+      - name: microservice
+        image: image-registry.openshift-image-registry.svc:5000/java-testingv1/java_app
+        ports:
+        - containerPort: 8080
+      - name: fluent-bit-agent
+        image: image-registry.openshift-image-registry.svc:5000/java-testingv1/fluent-bit
+        command: ["/fluent-bit/bin/fluent-bit"]
+        args: ["-c", "/mnt/config/td-agent-bit.conf"]
+        volumeMounts:
+        - name: fluent-bit-config
+          mountPath: /mnt/config
+        ports:
+        - containerPort: 24224
+      volumes:
+      - name: fluent-bit-config
+        configMap:
+          name: my-config
